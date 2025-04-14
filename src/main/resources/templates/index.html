@@ -96,6 +96,19 @@
             padding: 0.5rem;
             border-bottom: 1px solid #eee;
         }
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .sort-select {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -118,7 +131,16 @@
         <div id="results" class="results-container">
             <div class="row">
                 <div class="col-md-6">
-                    <h3>Analysis Results</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3>Analysis Results</h3>
+                        <div class="sort-controls">
+                            <span>Order by:</span>
+                            <select class="sort-select" id="sortSelect">
+                                <option value="default">Default (CSV Order)</option>
+                                <option value="type">Data Type</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="analysis-container" id="analysis"></div>
                 </div>
                 <div class="col-md-6">
@@ -161,16 +183,58 @@
 
         function displayResults(data) {
             document.getElementById('results').style.display = 'block';
-            displayAnalysis(data.analysis);
+            displayAnalysis(data.analysis, data.headers);
             displayDataPreview(data.data, data.headers);
             createChart(data.data, data.headers);
         }
 
-        function displayAnalysis(analysis) {
+        function displayAnalysis(analysis, headers) {
             const analysisContainer = document.getElementById('analysis');
             analysisContainer.innerHTML = '';
 
-            for (const [column, stats] of Object.entries(analysis)) {
+            // Store the original order of columns (matching the CSV headers)
+            const originalOrder = headers;
+
+            // Create sort select event listener
+            const sortSelect = document.getElementById('sortSelect');
+            sortSelect.addEventListener('change', () => {
+                const sortType = sortSelect.value;
+                renderAnalysis(analysis, sortType, originalOrder);
+            });
+
+            // Initial render with default sort
+            renderAnalysis(analysis, 'default', originalOrder);
+        }
+
+        function renderAnalysis(analysis, sortType, originalOrder) {
+            const analysisContainer = document.getElementById('analysis');
+            analysisContainer.innerHTML = '';
+
+            // Get sorted columns based on sort type
+            let columns;
+            if (sortType === 'type') {
+                // Create arrays for each data type
+                const numericColumns = [];
+                const textColumns = [];
+
+                // Sort columns into their respective type arrays while maintaining original order
+                originalOrder.forEach(column => {
+                    if (analysis[column].mean !== undefined) {
+                        numericColumns.push(column);
+                    } else {
+                        textColumns.push(column);
+                    }
+                });
+
+                // Combine arrays with numeric columns first
+                columns = [...numericColumns, ...textColumns];
+            } else {
+                columns = originalOrder;
+            }
+
+            // Create cards for each column
+            columns.forEach(column => {
+                const stats = analysis[column];
                 const statCard = document.createElement('div');
                 statCard.className = 'stat-card';
                 
@@ -219,7 +283,7 @@
                 });
 
                 analysisContainer.appendChild(statCard);
-            }
+            });
         }
 
         function displayDataPreview(data, headers) {
