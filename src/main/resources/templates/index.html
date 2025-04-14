@@ -18,11 +18,67 @@
             display: none;
             margin-top: 2rem;
         }
+        .analysis-container {
+            height: 70vh;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+        .analysis-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .analysis-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .analysis-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .analysis-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
         .stat-card {
             background: #f8f9fa;
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #dee2e6;
+        }
+        .stat-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .stat-card.expanded {
+            background: white;
+        }
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-card-header h4 {
+            margin: 0;
+        }
+        .stat-card-content {
+            display: none;
+            margin-top: 1rem;
+        }
+        .stat-card.expanded .stat-card-content {
+            display: block;
+        }
+        .data-type-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        .numeric-badge {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .text-badge {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
         }
         .chart-container {
             margin: 2rem 0;
@@ -63,7 +119,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <h3>Analysis Results</h3>
-                    <div id="analysis"></div>
+                    <div class="analysis-container" id="analysis"></div>
                 </div>
                 <div class="col-md-6">
                     <h3>Data Preview</h3>
@@ -118,43 +174,50 @@
                 const statCard = document.createElement('div');
                 statCard.className = 'stat-card';
                 
-                let statsHtml = `<h4>${column}</h4><ul class="list-unstyled">`;
+                // Determine data type
+                const isNumeric = stats.mean !== undefined;
+                const dataType = isNumeric ? 'Numeric' : 'Text';
+                const dataTypeClass = isNumeric ? 'numeric-badge' : 'text-badge';
                 
-                // Common stats for all types
-                statsHtml += `<li>Total Count: ${stats.count}</li>`;
-                statsHtml += `<li>Null Values: ${stats.nullCount}</li>`;
-                
-                // Numeric stats
-                if (stats.mean !== undefined) {
-                    statsHtml += `
-                        <li>Mean: ${stats.mean.toFixed(2)}</li>
-                        <li>Median: ${stats.median.toFixed(2)}</li>
-                        <li>Standard Deviation: ${stats.stdDev.toFixed(2)}</li>
-                        <li>Min: ${stats.min.toFixed(2)}</li>
-                        <li>Max: ${stats.max.toFixed(2)}</li>
-                    `;
-                }
-                
-                // Text stats
-                if (stats.uniqueCount !== undefined) {
-                    statsHtml += `<li>Unique Values: ${stats.uniqueCount}</li>`;
-                    if (stats.topValues && stats.topValues.length > 0) {
-                        statsHtml += `<li class="top-values">Top Values:`;
-                        statsHtml += `<div class="top-values-list">`;
-                        stats.topValues.forEach(item => {
-                            statsHtml += `
-                                <div class="top-value-item">
-                                    <span>${item.value}</span>
-                                    <span>${item.count} times</span>
-                                </div>
-                            `;
-                        });
-                        statsHtml += `</div></li>`;
-                    }
-                }
-                
-                statsHtml += '</ul>';
-                statCard.innerHTML = statsHtml;
+                statCard.innerHTML = `
+                    <div class="stat-card-header">
+                        <h4>${column}</h4>
+                        <span class="data-type-badge ${dataTypeClass}">${dataType}</span>
+                    </div>
+                    <div class="stat-card-content">
+                        <ul class="list-unstyled">
+                            <li>Total Count: ${stats.count}</li>
+                            <li>Null Values: ${stats.nullCount}</li>
+                            ${isNumeric ? `
+                                <li>Mean: ${stats.mean.toFixed(2)}</li>
+                                <li>Median: ${stats.median.toFixed(2)}</li>
+                                <li>Standard Deviation: ${stats.stdDev.toFixed(2)}</li>
+                                <li>Min: ${stats.min.toFixed(2)}</li>
+                                <li>Max: ${stats.max.toFixed(2)}</li>
+                            ` : `
+                                <li>Unique Values: ${stats.uniqueCount}</li>
+                                ${stats.topValues && stats.topValues.length > 0 ? `
+                                    <li class="top-values">Top Values:
+                                        <div class="top-values-list">
+                                            ${stats.topValues.map(item => `
+                                                <div class="top-value-item">
+                                                    <span>${item.value}</span>
+                                                    <span>${item.count} times</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </li>
+                                ` : ''}
+                            `}
+                        </ul>
+                    </div>
+                `;
+
+                // Add click event to toggle expansion
+                statCard.addEventListener('click', () => {
+                    statCard.classList.toggle('expanded');
+                });
+
                 analysisContainer.appendChild(statCard);
             }
         }
