@@ -1,9 +1,36 @@
 .upload-container {
     max-width: 600px;
-    margin: 2rem auto;
-    padding: 2rem;
+    margin: 1rem auto;
+    padding: 1rem;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    height: auto;
+    min-height: auto;
+}
+
+.upload-container h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.upload-container .card {
+    margin-bottom: 0;
+    height: auto;
+    min-height: auto;
+}
+
+.upload-container .card-body {
+    padding: 1rem;
+    height: auto;
+    min-height: auto;
+}
+
+.upload-container .form-label {
+    margin-bottom: 0.5rem;
+}
+
+.upload-container .btn {
+    margin-top: 0.5rem;
 }
 
 .results-container {

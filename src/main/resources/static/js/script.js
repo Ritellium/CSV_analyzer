@@ -189,6 +189,172 @@ function initializeCharts(data, headers) {
     let histogramChart = null;
     let scatterChart = null;
 
+    function updateHistogram() {
+        const selectedColumn = histogramSelect.value;
+        if (!selectedColumn) return;
+
+        const values = data.map(row => parseFloat(row[selectedColumn]) || 0);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = max - min;
+        
+        // Calculate optimal number of bins (between 10 and 50)
+        const binCount = Math.min(50, Math.max(10, Math.ceil(Math.sqrt(values.length))));
+        const binSize = range / binCount;
+
+        // Create bins
+        const bins = Array(binCount).fill(0);
+        values.forEach(value => {
+            const binIndex = Math.min(Math.floor((value - min) / binSize), binCount - 1);
+            bins[binIndex]++;
+        });
+
+        // Create bin labels
+        const binLabels = Array.from({length: binCount}, (_, i) => {
+            const start = min + i * binSize;
+            return start.toFixed(2);
+        });
+
+        // Calculate statistics
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const sorted = [...values].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        const std = Math.sqrt(values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length);
+
+        if (histogramChart) {
+            histogramChart.destroy();
+        }
+
+        const histogramCtx = document.getElementById('histogramChart').getContext('2d');
+        const datasets = [{
+            label: `Distribution of ${selectedColumn}`,
+            data: bins,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }];
+
+        // Add statistics lines if enabled
+        if (document.getElementById('histogramMean').checked) {
+            const meanBinIndex = Math.min(Math.floor((mean - min) / binSize), binCount - 1);
+            const meanBinStart = min + meanBinIndex * binSize;
+            const meanBinCenter = meanBinStart + binSize / 2;
+            
+            datasets.push({
+                label: 'Mean',
+                data: Array(binCount).fill(0).map((_, i) => {
+                    const binStart = min + i * binSize;
+                    const binCenter = binStart + binSize / 2;
+                    return Math.abs(binCenter - meanBinCenter) < 0.0001 ? Math.max(...bins) : 0;
+                }),
+                borderColor: 'rgba(255, 0, 0, 1)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                type: 'line'
+            });
+        }
+
+        if (document.getElementById('histogramMedian').checked) {
+            const medianBinIndex = Math.min(Math.floor((median - min) / binSize), binCount - 1);
+            const medianBinStart = min + medianBinIndex * binSize;
+            const medianBinCenter = medianBinStart + binSize / 2;
+            
+            datasets.push({
+                label: 'Median',
+                data: Array(binCount).fill(0).map((_, i) => {
+                    const binStart = min + i * binSize;
+                    const binCenter = binStart + binSize / 2;
+                    return Math.abs(binCenter - medianBinCenter) < 0.0001 ? Math.max(...bins) : 0;
+                }),
+                borderColor: 'rgba(0, 255, 0, 1)',
+                borderWidth: 2,
+                borderDash: [2, 2],
+                fill: false,
+                type: 'line'
+            });
+        }
+
+        if (document.getElementById('histogramStd').checked) {
+            const meanPlusStdBinIndex = Math.min(Math.floor((mean + std - min) / binSize), binCount - 1);
+            const meanMinusStdBinIndex = Math.min(Math.floor((mean - std - min) / binSize), binCount - 1);
+            
+            const meanPlusStdBinStart = min + meanPlusStdBinIndex * binSize;
+            const meanMinusStdBinStart = min + meanMinusStdBinIndex * binSize;
+            
+            const meanPlusStdBinCenter = meanPlusStdBinStart + binSize / 2;
+            const meanMinusStdBinCenter = meanMinusStdBinStart + binSize / 2;
+            
+            datasets.push({
+                label: 'Mean + Std',
+                data: Array(binCount).fill(0).map((_, i) => {
+                    const binStart = min + i * binSize;
+                    const binCenter = binStart + binSize / 2;
+                    return Math.abs(binCenter - meanPlusStdBinCenter) < 0.0001 ? Math.max(...bins) : 0;
+                }),
+                borderColor: 'rgba(255, 165, 0, 1)',
+                borderWidth: 2,
+                borderDash: [1, 1],
+                fill: false,
+                type: 'line'
+            });
+            
+            datasets.push({
+                label: 'Mean - Std',
+                data: Array(binCount).fill(0).map((_, i) => {
+                    const binStart = min + i * binSize;
+                    const binCenter = binStart + binSize / 2;
+                    return Math.abs(binCenter - meanMinusStdBinCenter) < 0.0001 ? Math.max(...bins) : 0;
+                }),
+                borderColor: 'rgba(255, 165, 0, 1)',
+                borderWidth: 2,
+                borderDash: [1, 1],
+                fill: false,
+                type: 'line'
+            });
+        }
+
+        histogramChart = new Chart(histogramCtx, {
+            type: 'bar',
+            data: {
+                labels: binLabels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Histogram of ${selectedColumn}`
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        },
+                        type: document.getElementById('histogramLogY').checked ? 'logarithmic' : 'linear',
+                        grid: {
+                            display: document.getElementById('histogramGrid').checked
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Value Range'
+                        },
+                        type: document.getElementById('histogramLogX').checked ? 'logarithmic' : 'linear',
+                        grid: {
+                            display: document.getElementById('histogramGrid').checked
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     function updateScatterPlot() {
         const xColumn = scatterXSelect.value;
         const yColumn = scatterYSelect.value;
