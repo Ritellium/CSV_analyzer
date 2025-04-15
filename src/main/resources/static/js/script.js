@@ -203,6 +203,12 @@ function initializeCharts(data, headers) {
         const yMean = yValues.reduce((a, b) => a + b, 0) / yValues.length;
         const xStd = Math.sqrt(xValues.reduce((a, b) => a + Math.pow(b - xMean, 2), 0) / xValues.length);
         const yStd = Math.sqrt(yValues.reduce((a, b) => a + Math.pow(b - yMean, 2), 0) / yValues.length);
+        
+        // Calculate medians
+        const sortedX = [...xValues].sort((a, b) => a - b);
+        const sortedY = [...yValues].sort((a, b) => a - b);
+        const xMedian = sortedX[Math.floor(sortedX.length / 2)];
+        const yMedian = sortedY[Math.floor(sortedY.length / 2)];
 
         if (scatterChart) {
             scatterChart.destroy();
@@ -242,16 +248,36 @@ function initializeCharts(data, headers) {
             });
         }
 
+        // Add median lines if enabled
+        if (document.getElementById('scatterMedian').checked) {
+            datasets.push({
+                label: 'X Median',
+                data: [{x: xMedian, y: Math.min(...yValues)}, {x: xMedian, y: Math.max(...yValues)}],
+                borderColor: 'rgba(0, 255, 0, 1)',
+                borderWidth: 2,
+                borderDash: [2, 2],
+                fill: false,
+                type: 'line',
+                pointRadius: 0
+            });
+            datasets.push({
+                label: 'Y Median',
+                data: [{x: Math.min(...xValues), y: yMedian}, {x: Math.max(...xValues), y: yMedian}],
+                borderColor: 'rgba(0, 255, 0, 1)',
+                borderWidth: 2,
+                borderDash: [2, 2],
+                fill: false,
+                type: 'line',
+                pointRadius: 0
+            });
+        }
+
         // Add standard deviation lines if enabled
         if (document.getElementById('scatterStd').checked) {
+            // X-axis standard deviation lines
             datasets.push({
-                label: 'X Mean ± Std',
-                data: [
-                    {x: xMean + xStd, y: Math.min(...yValues)},
-                    {x: xMean + xStd, y: Math.max(...yValues)},
-                    {x: xMean - xStd, y: Math.min(...yValues)},
-                    {x: xMean - xStd, y: Math.max(...yValues)}
-                ],
+                label: 'X Mean + Std',
+                data: [{x: xMean + xStd, y: Math.min(...yValues)}, {x: xMean + xStd, y: Math.max(...yValues)}],
                 borderColor: 'rgba(255, 165, 0, 1)',
                 borderWidth: 2,
                 borderDash: [2, 2],
@@ -260,13 +286,30 @@ function initializeCharts(data, headers) {
                 pointRadius: 0
             });
             datasets.push({
-                label: 'Y Mean ± Std',
-                data: [
-                    {x: Math.min(...xValues), y: yMean + yStd},
-                    {x: Math.max(...xValues), y: yMean + yStd},
-                    {x: Math.min(...xValues), y: yMean - yStd},
-                    {x: Math.max(...xValues), y: yMean - yStd}
-                ],
+                label: 'X Mean - Std',
+                data: [{x: xMean - xStd, y: Math.min(...yValues)}, {x: xMean - xStd, y: Math.max(...yValues)}],
+                borderColor: 'rgba(255, 165, 0, 1)',
+                borderWidth: 2,
+                borderDash: [2, 2],
+                fill: false,
+                type: 'line',
+                pointRadius: 0
+            });
+            
+            // Y-axis standard deviation lines
+            datasets.push({
+                label: 'Y Mean + Std',
+                data: [{x: Math.min(...xValues), y: yMean + yStd}, {x: Math.max(...xValues), y: yMean + yStd}],
+                borderColor: 'rgba(255, 165, 0, 1)',
+                borderWidth: 2,
+                borderDash: [2, 2],
+                fill: false,
+                type: 'line',
+                pointRadius: 0
+            });
+            datasets.push({
+                label: 'Y Mean - Std',
+                data: [{x: Math.min(...xValues), y: yMean - yStd}, {x: Math.max(...xValues), y: yMean - yStd}],
                 borderColor: 'rgba(255, 165, 0, 1)',
                 borderWidth: 2,
                 borderDash: [2, 2],
@@ -319,6 +362,7 @@ function initializeCharts(data, headers) {
     scatterXSelect.addEventListener('change', updateScatterPlot);
     scatterYSelect.addEventListener('change', updateScatterPlot);
     document.getElementById('scatterMean').addEventListener('change', updateScatterPlot);
+    document.getElementById('scatterMedian').addEventListener('change', updateScatterPlot);
     document.getElementById('scatterStd').addEventListener('change', updateScatterPlot);
     document.getElementById('scatterGrid').addEventListener('change', updateScatterPlot);
     document.getElementById('scatterLogX').addEventListener('change', updateScatterPlot);
