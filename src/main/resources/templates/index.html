@@ -87,6 +87,71 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
+        .card {
+            height: auto;
+        }
+        .card-body {
+            display: flex;
+            flex-direction: column;
+        }
+        canvas {
+            min-height: 300px;
+        }
+        .chart-controls {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .chart-control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .chart-control-group h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+        .chart-control-options {
+            display: flex;
+            gap: 1rem;
+        }
+        .chart-control-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .legend-item:hover {
+            background-color: #e9ecef;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        .legend-item.hidden {
+            opacity: 0.5;
+        }
         .top-values {
             margin-top: 1rem;
         }
@@ -108,6 +173,9 @@
             border: 1px solid #dee2e6;
             background-color: white;
             cursor: pointer;
+        }
+        .chart-settings {
+            margin-top: 1rem;
         }
     </style>
 </head>
@@ -155,7 +223,104 @@
             </div>
             <div class="chart-container">
                 <h3>Data Visualization</h3>
-                <canvas id="dataChart"></canvas>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4>Histogram</h4>
+                                <canvas id="histogramChart"></canvas>
+                                <div class="mt-3">
+                                    <div class="mb-3">
+                                        <label for="histogramColumn" class="form-label">Select Column:</label>
+                                        <select class="form-select" id="histogramColumn">
+                                            <option value="">Select a column</option>
+                                        </select>
+                                    </div>
+                                    <div class="chart-settings">
+                                        <h5>Statistics</h5>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="histogramMean">
+                                            <label class="form-check-label" for="histogramMean">Show Mean</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="histogramMedian">
+                                            <label class="form-check-label" for="histogramMedian">Show Median</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="histogramStd">
+                                            <label class="form-check-label" for="histogramStd">Show Standard Deviation</label>
+                                        </div>
+                                        <h5 class="mt-3">Display Settings</h5>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="histogramGrid">
+                                            <label class="form-check-label" for="histogramGrid">Show Grid</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="histogramLogX">
+                                            <label class="form-check-label" for="histogramLogX">Logarithmic X Scale</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="histogramLogY">
+                                            <label class="form-check-label" for="histogramLogY">Logarithmic Y Scale</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4>Scatter Plot</h4>
+                                <canvas id="scatterChart"></canvas>
+                                <div class="mt-3">
+                                    <div class="row mb-3">
+                                        <div class="col">
+                                            <label for="scatterX" class="form-label">X Axis:</label>
+                                            <select class="form-select" id="scatterX">
+                                                <option value="">Select X column</option>
+                                            </select>
+                                        </div>
+                                        <div class="col">
+                                            <label for="scatterY" class="form-label">Y Axis:</label>
+                                            <select class="form-select" id="scatterY">
+                                                <option value="">Select Y column</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="chart-settings">
+                                        <h5>Statistics</h5>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="scatterMean">
+                                            <label class="form-check-label" for="scatterMean">Show Mean</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="scatterMedian">
+                                            <label class="form-check-label" for="scatterMedian">Show Median</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="scatterStd">
+                                            <label class="form-check-label" for="scatterStd">Show Standard Deviation</label>
+                                        </div>
+                                        <h5 class="mt-3">Display Settings</h5>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="scatterGrid">
+                                            <label class="form-check-label" for="scatterGrid">Show Grid</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="scatterLogX">
+                                            <label class="form-check-label" for="scatterLogX">Logarithmic X Scale</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="scatterLogY">
+                                            <label class="form-check-label" for="scatterLogY">Logarithmic Y Scale</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -185,7 +350,7 @@
             document.getElementById('results').style.display = 'block';
             displayAnalysis(data.analysis, data.headers);
             displayDataPreview(data.data, data.headers);
-            createChart(data.data, data.headers);
+            initializeCharts(data.data, data.headers);
         }
 
         function displayAnalysis(analysis, headers) {
@@ -316,9 +481,7 @@
             });
         }
 
-        function createChart(data, headers) {
-            const ctx = document.getElementById('dataChart').getContext('2d');
-            
+        function initializeCharts(data, headers) {
             // Find numeric columns
             const numericColumns = headers.filter(header => {
                 const value = data[0][header];
@@ -327,33 +490,265 @@
 
             if (numericColumns.length === 0) return;
 
-            const datasets = numericColumns.map(column => ({
-                label: column,
-                data: data.map(row => parseFloat(row[column]) || 0),
-                borderColor: getRandomColor(),
-                fill: false
-            }));
+            // Populate dropdowns
+            const histogramSelect = document.getElementById('histogramColumn');
+            const scatterXSelect = document.getElementById('scatterX');
+            const scatterYSelect = document.getElementById('scatterY');
 
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: data.length}, (_, i) => i + 1),
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Numeric Data Visualization'
+            numericColumns.forEach(column => {
+                const option = document.createElement('option');
+                option.value = column;
+                option.textContent = column;
+                histogramSelect.appendChild(option.cloneNode(true));
+                scatterXSelect.appendChild(option.cloneNode(true));
+                scatterYSelect.appendChild(option.cloneNode(true));
+            });
+
+            // Initialize charts
+            let histogramChart = null;
+            let scatterChart = null;
+
+            // Histogram chart
+            function updateHistogram() {
+                const selectedColumn = histogramSelect.value;
+                if (!selectedColumn) return;
+
+                const values = data.map(row => parseFloat(row[selectedColumn]) || 0);
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                const range = max - min;
+                
+                // Calculate optimal number of bins (between 10 and 50)
+                const binCount = Math.min(50, Math.max(10, Math.ceil(Math.sqrt(values.length))));
+                const binSize = range / binCount;
+
+                const bins = Array(binCount).fill(0);
+                values.forEach(value => {
+                    const binIndex = Math.min(Math.floor((value - min) / binSize), binCount - 1);
+                    bins[binIndex]++;
+                });
+
+                const binLabels = Array.from({length: binCount}, (_, i) => {
+                    const start = min + i * binSize;
+                    const end = start + binSize;
+                    return `${start.toFixed(2)} - ${end.toFixed(2)}`;
+                });
+
+                if (histogramChart) {
+                    histogramChart.destroy();
+                }
+
+                const histogramCtx = document.getElementById('histogramChart').getContext('2d');
+                const datasets = [{
+                    label: `Distribution of ${selectedColumn}`,
+                    data: bins,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }];
+
+                histogramChart = new Chart(histogramCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: binLabels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Histogram of ${selectedColumn}`
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Frequency'
+                                },
+                                type: document.getElementById('histogramLogY').checked ? 'logarithmic' : 'linear',
+                                grid: {
+                                    display: document.getElementById('histogramGrid').checked
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Value Range'
+                                },
+                                type: document.getElementById('histogramLogX').checked ? 'logarithmic' : 'linear',
+                                grid: {
+                                    display: document.getElementById('histogramGrid').checked
+                                }
+                            }
                         }
                     }
-                }
-            });
-        }
+                });
+            }
 
-        function getRandomColor() {
-            return `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`;
+            // Scatter plot
+            function updateScatterPlot() {
+                const xColumn = scatterXSelect.value;
+                const yColumn = scatterYSelect.value;
+                if (!xColumn || !yColumn) return;
+
+                const xValues = data.map(row => parseFloat(row[xColumn]) || 0);
+                const yValues = data.map(row => parseFloat(row[yColumn]) || 0);
+
+                if (scatterChart) {
+                    scatterChart.destroy();
+                }
+
+                const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+                const datasets = [{
+                    label: `${yColumn} vs ${xColumn}`,
+                    data: xValues.map((x, i) => ({x, y: yValues[i]})),
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }];
+
+                // Add statistics if enabled
+                const xMean = xValues.reduce((a, b) => a + b, 0) / xValues.length;
+                const yMean = yValues.reduce((a, b) => a + b, 0) / yValues.length;
+                const xSorted = [...xValues].sort((a, b) => a - b);
+                const ySorted = [...yValues].sort((a, b) => a - b);
+                const xMedian = xSorted[Math.floor(xSorted.length / 2)];
+                const yMedian = ySorted[Math.floor(ySorted.length / 2)];
+                const xStd = Math.sqrt(xValues.reduce((a, b) => a + Math.pow(b - xMean, 2), 0) / xValues.length);
+                const yStd = Math.sqrt(yValues.reduce((a, b) => a + Math.pow(b - yMean, 2), 0) / yValues.length);
+
+                if (document.getElementById('scatterMean').checked) {
+                    datasets.push({
+                        label: 'X Mean',
+                        data: [{x: xMean, y: Math.min(...yValues)}, {x: xMean, y: Math.max(...yValues)}],
+                        borderColor: 'rgba(255, 0, 0, 1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        type: 'line'
+                    });
+                    datasets.push({
+                        label: 'Y Mean',
+                        data: [{x: Math.min(...xValues), y: yMean}, {x: Math.max(...xValues), y: yMean}],
+                        borderColor: 'rgba(255, 0, 0, 1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        type: 'line'
+                    });
+                }
+
+                if (document.getElementById('scatterMedian').checked) {
+                    datasets.push({
+                        label: 'X Median',
+                        data: [{x: xMedian, y: Math.min(...yValues)}, {x: xMedian, y: Math.max(...yValues)}],
+                        borderColor: 'rgba(0, 255, 0, 1)',
+                        borderWidth: 2,
+                        borderDash: [2, 2],
+                        fill: false,
+                        type: 'line'
+                    });
+                    datasets.push({
+                        label: 'Y Median',
+                        data: [{x: Math.min(...xValues), y: yMedian}, {x: Math.max(...xValues), y: yMedian}],
+                        borderColor: 'rgba(0, 255, 0, 1)',
+                        borderWidth: 2,
+                        borderDash: [2, 2],
+                        fill: false,
+                        type: 'line'
+                    });
+                }
+
+                if (document.getElementById('scatterStd').checked) {
+                    datasets.push({
+                        label: 'X Mean ± Std',
+                        data: [
+                            {x: xMean + xStd, y: Math.min(...yValues)},
+                            {x: xMean + xStd, y: Math.max(...yValues)},
+                            {x: xMean - xStd, y: Math.max(...yValues)},
+                            {x: xMean - xStd, y: Math.min(...yValues)}
+                        ],
+                        borderColor: 'rgba(255, 165, 0, 1)',
+                        borderWidth: 2,
+                        borderDash: [1, 1],
+                        fill: false,
+                        type: 'line'
+                    });
+                    datasets.push({
+                        label: 'Y Mean ± Std',
+                        data: [
+                            {x: Math.min(...xValues), y: yMean + yStd},
+                            {x: Math.max(...xValues), y: yMean + yStd},
+                            {x: Math.max(...xValues), y: yMean - yStd},
+                            {x: Math.min(...xValues), y: yMean - yStd}
+                        ],
+                        borderColor: 'rgba(255, 165, 0, 1)',
+                        borderWidth: 2,
+                        borderDash: [1, 1],
+                        fill: false,
+                        type: 'line'
+                    });
+                }
+
+                scatterChart = new Chart(scatterCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `${yColumn} vs ${xColumn}`
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xColumn
+                                },
+                                type: document.getElementById('scatterLogX').checked ? 'logarithmic' : 'linear',
+                                grid: {
+                                    display: document.getElementById('scatterGrid').checked
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: yColumn
+                                },
+                                type: document.getElementById('scatterLogY').checked ? 'logarithmic' : 'linear',
+                                grid: {
+                                    display: document.getElementById('scatterGrid').checked
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Add event listeners
+            histogramSelect.addEventListener('change', updateHistogram);
+            document.getElementById('histogramMean').addEventListener('change', updateHistogram);
+            document.getElementById('histogramMedian').addEventListener('change', updateHistogram);
+            document.getElementById('histogramStd').addEventListener('change', updateHistogram);
+            document.getElementById('histogramGrid').addEventListener('change', updateHistogram);
+            document.getElementById('histogramLogX').addEventListener('change', updateHistogram);
+            document.getElementById('histogramLogY').addEventListener('change', updateHistogram);
+
+            scatterXSelect.addEventListener('change', updateScatterPlot);
+            scatterYSelect.addEventListener('change', updateScatterPlot);
+            document.getElementById('scatterMean').addEventListener('change', updateScatterPlot);
+            document.getElementById('scatterMedian').addEventListener('change', updateScatterPlot);
+            document.getElementById('scatterStd').addEventListener('change', updateScatterPlot);
+            document.getElementById('scatterGrid').addEventListener('change', updateScatterPlot);
+            document.getElementById('scatterLogX').addEventListener('change', updateScatterPlot);
+            document.getElementById('scatterLogY').addEventListener('change', updateScatterPlot);
         }
     </script>
 </body>
