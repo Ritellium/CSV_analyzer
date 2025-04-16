@@ -4,154 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analysis - CSV Analyzer</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css" rel="stylesheet">
-    <link href="/css/analysis.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1 class="text-center mb-4">CSV Analyzer</h1>
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Analysis: <span id="fileName">Selected File</span></h2>
+        <div class="analysis-container">
+            <div class="header">
+                <h1>CSV Analyzer</h1>
                 <div>
-                    <a href="/upload" class="btn btn-primary">Back to Upload</a>
-                    <a href="/login" class="btn btn-outline-secondary ms-2">Logout</a>
+                    <a href="/upload" class="btn-back">Back to Upload</a>
                 </div>
             </div>
-        </div>
 
-        <div id="results" class="results-container">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3>Analysis Results</h3>
-                        <div class="sort-controls">
-                            <span>Order by:</span>
-                            <select class="sort-select" id="sortSelect">
-                                <option value="default">Default (CSV Order)</option>
-                                <option value="type">Data Type</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="analysis-container" id="analysis"></div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span th:text="${error}"></span>
+            </div>
+
+            <div th:if="${analysis}" class="analysis-content">
+                <h2>Analysis Results</h2>
+                <div class="file-info">
+                    <h3>File: <span th:text="${fileName}"></span></h3>
                 </div>
-                <div class="col-md-6">
-                    <h3>Data Preview</h3>
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="dataPreview">
-                            <thead></thead>
-                            <tbody></tbody>
+
+                <div class="analysis-sections">
+                    <div class="analysis-section">
+                        <h3>Basic Information</h3>
+                        <table>
+                            <tr>
+                                <th>Total Rows</th>
+                                <td th:text="${analysis.rowCount}"></td>
+                            </tr>
+                            <tr>
+                                <th>Total Columns</th>
+                                <td th:text="${analysis.columnCount}"></td>
+                            </tr>
                         </table>
                     </div>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Data Visualization</h3>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4>Histogram</h4>
-                                <canvas id="histogramChart"></canvas>
-                                <div class="mt-3">
-                                    <div class="mb-3">
-                                        <label for="histogramColumn" class="form-label">Select Column:</label>
-                                        <select class="form-select" id="histogramColumn">
-                                            <option value="">Select a column</option>
-                                        </select>
-                                    </div>
-                                    <div class="chart-settings">
-                                        <h5>Statistics</h5>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="histogramMean">
-                                            <label class="form-check-label" for="histogramMean">Show Mean</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="histogramMedian">
-                                            <label class="form-check-label" for="histogramMedian">Show Median</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="histogramStd">
-                                            <label class="form-check-label" for="histogramStd">Show Standard Deviation</label>
-                                        </div>
-                                        <h5 class="mt-3">Display Settings</h5>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="histogramGrid">
-                                            <label class="form-check-label" for="histogramGrid">Show Grid</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="histogramLogX">
-                                            <label class="form-check-label" for="histogramLogX">Logarithmic X Scale</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="histogramLogY">
-                                            <label class="form-check-label" for="histogramLogY">Logarithmic Y Scale</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4>Scatter Plot</h4>
-                                <canvas id="scatterChart"></canvas>
-                                <div class="mt-3">
-                                    <div class="row mb-3">
-                                        <div class="col">
-                                            <label for="scatterX" class="form-label">X Axis:</label>
-                                            <select class="form-select" id="scatterX">
-                                                <option value="">Select X column</option>
-                                            </select>
-                                        </div>
-                                        <div class="col">
-                                            <label for="scatterY" class="form-label">Y Axis:</label>
-                                            <select class="form-select" id="scatterY">
-                                                <option value="">Select Y column</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="chart-settings">
-                                        <h5>Statistics</h5>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="scatterMean">
-                                            <label class="form-check-label" for="scatterMean">Show Mean</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="scatterMedian">
-                                            <label class="form-check-label" for="scatterMedian">Show Median</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="scatterStd">
-                                            <label class="form-check-label" for="scatterStd">Show Standard Deviation</label>
-                                        </div>
-                                        <h5 class="mt-3">Display Settings</h5>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="scatterGrid">
-                                            <label class="form-check-label" for="scatterGrid">Show Grid</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="scatterLogX">
-                                            <label class="form-check-label" for="scatterLogX">Logarithmic X Scale</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="scatterLogY">
-                                            <label class="form-check-label" for="scatterLogY">Logarithmic Y Scale</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
+                    <div class="analysis-section">
+                        <h3>Column Analysis</h3>
+                        <div th:each="column : ${analysis.columnAnalysis}">
+                            <h4 th:text="${column.key}"></h4>
+                            <table>
+                                <tr>
+                                    <th>Total Values</th>
+                                    <td th:text="${column.value.totalCount}"></td>
+                                </tr>
+                                <tr>
+                                    <th>Unique Values</th>
+                                    <td th:text="${column.value.uniqueCount}"></td>
+                                </tr>
+                                <tr th:if="${column.value.isNumeric}">
+                                    <th>Mean</th>
+                                    <td th:text="${column.value.mean}"></td>
+                                </tr>
+                                <tr th:if="${column.value.isNumeric}">
+                                    <th>Min</th>
+                                    <td th:text="${column.value.min}"></td>
+                                </tr>
+                                <tr th:if="${column.value.isNumeric}">
+                                    <th>Max</th>
+                                    <td th:text="${column.value.max}"></td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-    <script src="/js/analysis.js"></script>
 </body>
 </html> 

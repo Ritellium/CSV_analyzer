@@ -21,15 +21,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(
-                    new AntPathRequestMatcher("/"),
-                    new AntPathRequestMatcher("/login"),
-                    new AntPathRequestMatcher("/login/**"),
-                    new AntPathRequestMatcher("/register"),
-                    new AntPathRequestMatcher("/css/**"),
-                    new AntPathRequestMatcher("/js/**"),
-                    new AntPathRequestMatcher("/images/**")
-                ).permitAll()
+                .requestMatchers("/", "/login", "/login/**", "/register", 
+                               "/upload", "/upload/**", 
+                               "/analysis", "/analysis/**", "/analysis?**",
+                               "/css/**", "/js/**", "/images/**")
+                .permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -47,10 +43,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers(
-                    new AntPathRequestMatcher("/login"),
-                    new AntPathRequestMatcher("/register")
-                )
+                .ignoringRequestMatchers("/login", "/register", "/upload", "/analysis", "/analysis/**")
             );
 
         return http.build();

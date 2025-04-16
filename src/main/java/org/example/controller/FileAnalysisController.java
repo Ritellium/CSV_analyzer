@@ -2,7 +2,6 @@ package org.example.controller;
 
 import org.example.service.FileAnalysisService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +23,7 @@ public class FileAnalysisController {
     }
 
     @GetMapping("/upload")
-    public String showUploadForm(Model model, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+    public String showUploadForm(Model model) {
         List<String> uploadedFiles = fileAnalysisService.getUploadedFiles();
         model.addAttribute("uploadedFiles", uploadedFiles);
         return "upload";
@@ -35,11 +31,7 @@ public class FileAnalysisController {
 
     @PostMapping("/upload")
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
-                                 RedirectAttributes redirectAttributes,
-                                 Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
-        }
+                                 RedirectAttributes redirectAttributes) {
         try {
             String fileName = fileAnalysisService.analyzeFile(file);
             redirectAttributes.addFlashAttribute("message", "File uploaded successfully!");
@@ -51,12 +43,12 @@ public class FileAnalysisController {
     }
 
     @GetMapping("/analysis")
-    public String showAnalysis(@RequestParam("file") String fileName,
-                             Model model,
-                             Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return "redirect:/login";
+    public String showAnalysis(@RequestParam(value = "file", required = false) String fileName,
+                             Model model) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "redirect:/upload";
         }
+        
         try {
             Map<String, Object> analysis = fileAnalysisService.getAnalysis(fileName);
             model.addAttribute("analysis", analysis);
