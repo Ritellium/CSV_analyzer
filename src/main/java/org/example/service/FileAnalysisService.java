@@ -6,9 +6,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,44 +60,137 @@ public class FileAnalysisService {
         analysis.put("columnCount", headers.length);
         analysis.put("headers", headers);
 
-        // Column analysis
-        Map<String, Object> columnAnalysis = new HashMap<>();
+        // Column analysis - use LinkedHashMap to maintain insertion order
+        Map<String, Object> columnAnalysis = new LinkedHashMap<>();
         for (int i = 0; i < headers.length; i++) {
             Map<String, Object> columnStats = new HashMap<>();
             List<String> values = new ArrayList<>();
             for (String[] row : rows) {
                 if (i < row.length) {
-                    values.add(row[i]);
+                    // Convert NA strings to null
+                    String value = row[i];
+                    if (value != null && value.trim().equalsIgnoreCase("NA")) {
+                        value = null;
+                    }
+                    values.add(value);
                 }
             }
             
-            // Basic statistics
+            // Determine data type
+            String dataType = determineDataType(values);
+            columnStats.put("dataType", dataType);
             columnStats.put("totalCount", values.size());
-            columnStats.put("uniqueCount", new HashSet<>(values).size());
+            columnStats.put("nullCount", values.stream().filter(v -> v == null || (v != null && v.trim().equalsIgnoreCase("NA"))).count());
+            columnStats.put("uniqueCount", values.stream().filter(v -> v != null && !v.trim().equalsIgnoreCase("NA")).distinct().count());
             
-            // Try to determine if column is numeric
-            boolean isNumeric = values.stream().allMatch(v -> v.matches("-?\\d+(\\.\\d+)?"));
-            if (isNumeric) {
+            // Calculate statistics based on data type
+            if ("NUMERIC".equals(dataType) || "FLOAT".equals(dataType)) {
                 List<Double> numericValues = values.stream()
+                    .filter(v -> v != null && !v.trim().equalsIgnoreCase("NA"))
                     .map(Double::parseDouble)
+                    .sorted()
                     .collect(Collectors.toList());
                 
-                double sum = numericValues.stream().mapToDouble(Double::doubleValue).sum();
-                double mean = sum / numericValues.size();
+                if (!numericValues.isEmpty()) {
+                    double sum = numericValues.stream().mapToDouble(Double::doubleValue).sum();
+                    double mean = sum / numericValues.size();
+                    
+                    double variance = numericValues.stream()
+                        .mapToDouble(x -> Math.pow(x - mean, 2))
+                        .sum() / numericValues.size();
+                    double stdDev = Math.sqrt(variance);
+                    
+                    // Calculate median and quartiles
+                    int size = numericValues.size();
+                    double median = size % 2 == 0 ?
+                        (numericValues.get(size/2 - 1) + numericValues.get(size/2)) / 2.0 :
+                        numericValues.get(size/2);
+                    
+                    double q1 = size % 4 == 0 ?
+                        (numericValues.get(size/4 - 1) + numericValues.get(size/4)) / 2.0 :
+                        numericValues.get(size/4);
+                    
+                    double q3 = size % 4 == 0 ?
+                        (numericValues.get(3*size/4 - 1) + numericValues.get(3*size/4)) / 2.0 :
+                        numericValues.get(3*size/4);
+                    
+                    columnStats.put("mean", mean);
+                    columnStats.put("median", median);
+                    columnStats.put("stdDev", stdDev);
+                    columnStats.put("q1", q1);
+                    columnStats.put("q3", q3);
+                    columnStats.put("min", numericValues.get(0));
+                    columnStats.put("max", numericValues.get(size - 1));
+                }
+            } else if ("TEXT".equals(dataType)) {
+                // Calculate frequency for text columns
+                Map<String, Long> frequency = values.stream()
+                    .filter(v -> v != null && !v.trim().equalsIgnoreCase("NA"))
+                    .collect(Collectors.groupingBy(v -> v, Collectors.counting()));
                 
-                columnStats.put("isNumeric", true);
-                columnStats.put("mean", mean);
-                columnStats.put("min", Collections.min(numericValues));
-                columnStats.put("max", Collections.max(numericValues));
-            } else {
-                columnStats.put("isNumeric", false);
+                List<Map.Entry<String, Long>> topValues = frequency.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .limit(5)
+                    .collect(Collectors.toList());
+                
+                columnStats.put("topValues", topValues);
             }
             
             columnAnalysis.put(headers[i], columnStats);
         }
         
         analysis.put("columnAnalysis", columnAnalysis);
+        analysis.put("previewData", rows.stream().limit(50).collect(Collectors.toList()));
         return analysis;
+    }
+
+    private String determineDataType(List<String> values) {
+        if (values.isEmpty()) {
+            return "TEXT";
+        }
+
+        boolean isInteger = true;
+        boolean isFloat = true;
+        int numericCount = 0;
+        int totalCount = 0;
+
+        for (String value : values) {
+            // Treat NA strings as null
+            if (value == null || value.trim().equalsIgnoreCase("NA")) {
+                continue;
+            }
+            totalCount++;
+            
+            try {
+                // Try parsing as integer first
+                Integer.parseInt(value);
+                numericCount++;
+            } catch (NumberFormatException e) {
+                isInteger = false;
+                try {
+                    // Try parsing as float
+                    Double.parseDouble(value);
+                    numericCount++;
+                } catch (NumberFormatException ex) {
+                    isFloat = false;
+                }
+            }
+
+            if (!isInteger && !isFloat) {
+                return "TEXT";
+            }
+        }
+
+        // If more than 80% of non-null values are numeric, consider it numeric
+        if (totalCount > 0 && (numericCount * 100.0 / totalCount) >= 80.0) {
+            if (isInteger) {
+                return "NUMERIC";
+            } else {
+                return "FLOAT";
+            }
+        }
+
+        return "TEXT";
     }
 
     public List<String> getUploadedFiles() {

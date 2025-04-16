@@ -26,46 +26,102 @@
                     <h3>File: <span th:text="${fileName}"></span></h3>
                 </div>
 
-                <div class="analysis-sections">
-                    <div class="analysis-section">
-                        <h3>Basic Information</h3>
-                        <table>
-                            <tr>
-                                <th>Total Rows</th>
-                                <td th:text="${analysis.rowCount}"></td>
-                            </tr>
-                            <tr>
-                                <th>Total Columns</th>
-                                <td th:text="${analysis.columnCount}"></td>
-                            </tr>
-                        </table>
+                <div class="analysis-layout">
+                    <div class="stats-column">
+                        <div class="stats-header">
+                            <h3>Column Statistics</h3>
+                            <div class="sort-controls">
+                                <span>Sort by:</span>
+                                <select id="sortSelect" onchange="sortColumns()">
+                                    <option value="default">Default (CSV Order)</option>
+                                    <option value="type">Data Type (Maintain Order)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="stats-list" id="analysisCards">
+                            <div th:each="column, iterStat : ${analysis.columnAnalysis}" 
+                                 class="stats-card" 
+                                 th:data-type="${column.value.dataType}"
+                                 th:data-order="${iterStat.index}">
+                                <div class="card-header" onclick="toggleCard(this)">
+                                    <h4 th:text="${column.key}"></h4>
+                                    <span class="data-type" th:text="${column.value.dataType}"></span>
+                                </div>
+                                <div class="card-content">
+                                    <table>
+                                        <tr>
+                                            <th>Total Values</th>
+                                            <td th:text="${column.value.totalCount}"></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Null Values</th>
+                                            <td th:text="${column.value.nullCount}"></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Unique Values</th>
+                                            <td th:text="${column.value.uniqueCount}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>Mean</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.mean, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>Median</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.median, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>Standard Deviation</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.stdDev, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>First Quartile (Q1)</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.q1, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>Third Quartile (Q3)</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.q3, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>Min</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.min, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'FLOAT' || column.value.dataType == 'NUMERIC'}">
+                                            <th>Max</th>
+                                            <td th:text="${#numbers.formatDecimal(column.value.max, 1, 2)}"></td>
+                                        </tr>
+                                        <tr th:if="${column.value.dataType == 'TEXT'}">
+                                            <th>Top 5 Values</th>
+                                            <td>
+                                                <ul>
+                                                    <li th:each="topValue : ${column.value.topValues}">
+                                                        <span th:text="${topValue.key}"></span>
+                                                        <span class="count">(<span th:text="${topValue.value}"></span>)</span>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="analysis-section">
-                        <h3>Column Analysis</h3>
-                        <div th:each="column : ${analysis.columnAnalysis}">
-                            <h4 th:text="${column.key}"></h4>
-                            <table>
-                                <tr>
-                                    <th>Total Values</th>
-                                    <td th:text="${column.value.totalCount}"></td>
-                                </tr>
-                                <tr>
-                                    <th>Unique Values</th>
-                                    <td th:text="${column.value.uniqueCount}"></td>
-                                </tr>
-                                <tr th:if="${column.value.isNumeric}">
-                                    <th>Mean</th>
-                                    <td th:text="${column.value.mean}"></td>
-                                </tr>
-                                <tr th:if="${column.value.isNumeric}">
-                                    <th>Min</th>
-                                    <td th:text="${column.value.min}"></td>
-                                </tr>
-                                <tr th:if="${column.value.isNumeric}">
-                                    <th>Max</th>
-                                    <td th:text="${column.value.max}"></td>
-                                </tr>
+                    <div class="preview-column">
+                        <div class="preview-header">
+                            <h3>Data Preview (First 50 Rows)</h3>
+                        </div>
+                        <div class="preview-table-container">
+                            <table class="preview-table">
+                                <thead>
+                                    <tr>
+                                        <th th:each="header : ${analysis.headers}" th:text="${header}"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="row : ${analysis.previewData}">
+                                        <td th:each="cell : ${row}" th:text="${cell}"></td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -73,5 +129,59 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleCard(header) {
+            const card = header.parentElement;
+            const content = card.querySelector('.card-content');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function sortColumns() {
+            const sortSelect = document.getElementById('sortSelect');
+            const cardsContainer = document.getElementById('analysisCards');
+            const cards = Array.from(cardsContainer.children);
+            
+            if (sortSelect.value === 'type') {
+                // Group cards by type while maintaining relative order within each type
+                const typeGroups = {};
+                cards.forEach(card => {
+                    const type = card.dataset.type;
+                    if (!typeGroups[type]) {
+                        typeGroups[type] = [];
+                    }
+                    typeGroups[type].push(card);
+                });
+                
+                // Sort types in a specific order
+                const typeOrder = ['FLOAT', 'NUMERIC', 'TEXT'];
+                const sortedCards = [];
+                
+                typeOrder.forEach(type => {
+                    if (typeGroups[type]) {
+                        // Sort within each type group by original position
+                        typeGroups[type].sort((a, b) => parseInt(a.dataset.order) - parseInt(b.dataset.order));
+                        sortedCards.push(...typeGroups[type]);
+                    }
+                });
+                
+                // Re-append cards in new order
+                sortedCards.forEach(card => cardsContainer.appendChild(card));
+            } else {
+                // Restore default order by original position
+                cards.sort((a, b) => parseInt(a.dataset.order) - parseInt(b.dataset.order));
+                cards.forEach(card => cardsContainer.appendChild(card));
+            }
+        }
+
+        // Initialize all cards as collapsed
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.stats-card');
+            cards.forEach(card => {
+                const content = card.querySelector('.card-content');
+                content.style.display = 'none';
+            });
+        });
+    </script>
 </body>
 </html> 
