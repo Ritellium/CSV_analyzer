@@ -127,10 +127,75 @@
                     </div>
                 </div>
             </div>
+
+            <div class="visualization-section">
+                <div class="visualization-layout">
+                    <div class="histogram-column">
+                        <div class="visualization-header">
+                            <h3>Histogram</h3>
+                            <div class="column-selector">
+                                <select id="histogramColumn" onchange="updateHistogram()">
+                                    <option value="">Select Column</option>
+                                </select>
+                            </div>
+                            <div class="visualization-options">
+                                <div class="option-group">
+                                    <h4>Statistics</h4>
+                                    <label><input type="checkbox" id="showMean" onchange="updateHistogram()"> Mean</label>
+                                    <label><input type="checkbox" id="showMedian" onchange="updateHistogram()"> Median</label>
+                                    <label><input type="checkbox" id="showStd" onchange="updateHistogram()"> Standard Deviation</label>
+                                </div>
+                                <div class="option-group">
+                                    <h4>Grid</h4>
+                                    <label><input type="checkbox" id="showGrid" onchange="updateHistogram()"> Show Grid</label>
+                                    <label><input type="checkbox" id="logX" onchange="updateHistogram()"> Logarithmic X</label>
+                                    <label><input type="checkbox" id="logY" onchange="updateHistogram()"> Logarithmic Y</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="histogramChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="scatter-column">
+                        <div class="visualization-header">
+                            <h3>Scatter Plot</h3>
+                            <div class="column-selector">
+                                <select id="scatterX" onchange="updateScatter()">
+                                    <option value="">Select X Column</option>
+                                </select>
+                                <select id="scatterY" onchange="updateScatter()">
+                                    <option value="">Select Y Column</option>
+                                </select>
+                            </div>
+                            <div class="visualization-options">
+                                <div class="option-group">
+                                    <h4>Statistics</h4>
+                                    <label><input type="checkbox" id="showScatterMean" onchange="updateScatter()"> Mean</label>
+                                    <label><input type="checkbox" id="showScatterMedian" onchange="updateScatter()"> Median</label>
+                                    <label><input type="checkbox" id="showScatterStd" onchange="updateScatter()"> Standard Deviation</label>
+                                </div>
+                                <div class="option-group">
+                                    <h4>Grid</h4>
+                                    <label><input type="checkbox" id="showScatterGrid" onchange="updateScatter()"> Show Grid</label>
+                                    <label><input type="checkbox" id="logScatterX" onchange="updateScatter()"> Logarithmic X</label>
+                                    <label><input type="checkbox" id="logScatterY" onchange="updateScatter()"> Logarithmic Y</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="scatterChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/visualization.js"></script>
+    <script th:inline="javascript">
         function toggleCard(header) {
             const card = header.parentElement;
             const content = card.querySelector('.card-content');
@@ -174,13 +239,69 @@
             }
         }
 
-        // Initialize all cards as collapsed
+        // Initialize all cards as collapsed and visualization data
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.stats-card');
-            cards.forEach(card => {
+            // Collapse all cards
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach(card => {
                 const content = card.querySelector('.card-content');
                 content.style.display = 'none';
             });
+
+            // Get all numeric columns from the analysis data
+            const numericColumns = [];
+            statsCards.forEach(card => {
+                const dataType = card.dataset.type;
+                if (dataType === 'FLOAT' || dataType === 'NUMERIC') {
+                    const columnName = card.querySelector('h4').textContent;
+                    numericColumns.push(columnName);
+                }
+            });
+
+            // Initialize visualization data
+            const analysisData = {
+                columnAnalysis: {}
+            };
+
+            // Populate the columnAnalysis object
+            statsCards.forEach(card => {
+                const columnName = card.querySelector('h4').textContent;
+                const dataType = card.dataset.type;
+                const values = [];
+                
+                // Get values from the preview table
+                const table = document.querySelector('.preview-table');
+                if (table) {
+                    const headerIndex = Array.from(table.querySelectorAll('th')).findIndex(th => th.textContent === columnName);
+                    if (headerIndex !== -1) {
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach(row => {
+                            const cell = row.cells[headerIndex];
+                            if (cell) {
+                                values.push(cell.textContent);
+                            }
+                        });
+                    }
+                }
+
+                analysisData.columnAnalysis[columnName] = {
+                    dataType: dataType,
+                    values: values
+                };
+            });
+
+            console.log('Initializing visualization data:', analysisData);
+            initializeVisualizationData(analysisData);
+
+            // Add event listeners for scatter plot controls
+            document.getElementById('scatterX').addEventListener('change', updateScatter);
+            document.getElementById('scatterY').addEventListener('change', updateScatter);
+            document.getElementById('scatterGrid').addEventListener('change', updateScatter);
+            document.getElementById('scatterLogX').addEventListener('change', updateScatter);
+            document.getElementById('scatterLogY').addEventListener('change', updateScatter);
+            document.getElementById('scatterMean').addEventListener('change', updateScatter);
+            document.getElementById('scatterMedian').addEventListener('change', updateScatter);
+            document.getElementById('scatterStd').addEventListener('change', updateScatter);
         });
     </script>
 </body>
