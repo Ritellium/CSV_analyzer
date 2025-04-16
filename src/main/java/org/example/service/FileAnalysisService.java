@@ -1,87 +1,109 @@
 package org.example.service;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.example.service.analyzer.DataAnalyzer;
-import org.example.service.analyzer.NumericAnalyzer;
-import org.example.service.analyzer.TextAnalyzer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class FileAnalysisService {
-    private final List<DataAnalyzer> analyzers;
+    private final Map<String, List<String[]>> fileData = new HashMap<>();
+    private final Map<String, String[]> fileHeaders = new HashMap<>();
 
-    public FileAnalysisService() {
-        this.analyzers = Arrays.asList(
-                new NumericAnalyzer(),
-                new TextAnalyzer()
-        );
-    }
+    public String analyzeFile(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
 
-    public Map<String, Object> analyzeFile(MultipartFile file) throws IOException {
-        if (!file.getOriginalFilename().endsWith(".csv")) {
+        if (!file.getOriginalFilename().toLowerCase().endsWith(".csv")) {
             throw new IllegalArgumentException("Only CSV files are supported");
         }
 
-        return analyzeCSV(file);
+        String fileName = file.getOriginalFilename();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                throw new IllegalArgumentException("File is empty");
+            }
+
+            String[] headers = headerLine.split(",");
+            fileHeaders.put(fileName, headers);
+
+            List<String[]> rows = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                rows.add(line.split(","));
+            }
+            fileData.put(fileName, rows);
+
+            return fileName;
+        }
     }
 
-    private Map<String, Object> analyzeCSV(MultipartFile file) throws IOException {
-        Map<String, Object> result = new HashMap<>();
-        List<Map<String, String>> data = new ArrayList<>();
+    public Map<String, Object> getAnalysis(String fileName) {
+        Map<String, Object> analysis = new HashMap<>();
         
-        try (CSVParser parser = new CSVParser(
-                new InputStreamReader(file.getInputStream()),
-                CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
-            
-            List<String> headers = parser.getHeaderNames();
-            result.put("headers", headers);
-            
-            // Collect all values for each column
-            Map<String, List<String>> columnValues = new HashMap<>();
-            headers.forEach(header -> columnValues.put(header, new ArrayList<>()));
-            
-            for (CSVRecord record : parser) {
-                Map<String, String> row = new HashMap<>();
-                for (String header : headers) {
-                    String value = record.get(header);
-                    row.put(header, value);
-                    columnValues.get(header).add(value);
-                }
-                data.add(row);
-            }
+        if (!fileData.containsKey(fileName)) {
+            throw new IllegalArgumentException("File not found");
+        }
 
-            // Analyze each column
-            Map<String, Object> columnAnalysis = new HashMap<>();
-            for (String header : headers) {
-                List<String> values = columnValues.get(header);
-                DataAnalyzer analyzer = determineAnalyzer(values);
-                if (analyzer != null) {
-                    columnAnalysis.put(header, analyzer.analyze(values));
+        List<String[]> rows = fileData.get(fileName);
+        String[] headers = fileHeaders.get(fileName);
+
+        // Basic analysis
+        analysis.put("fileName", fileName);
+        analysis.put("rowCount", rows.size());
+        analysis.put("columnCount", headers.length);
+        analysis.put("headers", headers);
+
+        // Column analysis
+        Map<String, Object> columnAnalysis = new HashMap<>();
+        for (int i = 0; i < headers.length; i++) {
+            Map<String, Object> columnStats = new HashMap<>();
+            List<String> values = new ArrayList<>();
+            for (String[] row : rows) {
+                if (i < row.length) {
+                    values.add(row[i]);
                 }
             }
             
-            result.put("data", data);
-            result.put("analysis", columnAnalysis);
+            // Basic statistics
+            columnStats.put("totalCount", values.size());
+            columnStats.put("uniqueCount", new HashSet<>(values).size());
+            
+            // Try to determine if column is numeric
+            boolean isNumeric = values.stream().allMatch(v -> v.matches("-?\\d+(\\.\\d+)?"));
+            if (isNumeric) {
+                List<Double> numericValues = values.stream()
+                    .map(Double::parseDouble)
+                    .collect(Collectors.toList());
+                
+                double sum = numericValues.stream().mapToDouble(Double::doubleValue).sum();
+                double mean = sum / numericValues.size();
+                
+                columnStats.put("isNumeric", true);
+                columnStats.put("mean", mean);
+                columnStats.put("min", Collections.min(numericValues));
+                columnStats.put("max", Collections.max(numericValues));
+            } else {
+                columnStats.put("isNumeric", false);
+            }
+            
+            columnAnalysis.put(headers[i], columnStats);
         }
         
-        return result;
+        analysis.put("columnAnalysis", columnAnalysis);
+        return analysis;
     }
 
-    private DataAnalyzer determineAnalyzer(List<String> values) {
-        // Try each analyzer until one can handle the data
-        for (DataAnalyzer analyzer : analyzers) {
-            if (values.stream().anyMatch(analyzer::canAnalyze)) {
-                return analyzer;
-            }
-        }
-        return null;
+    public List<String> getUploadedFiles() {
+        return new ArrayList<>(fileData.keySet());
     }
 } 

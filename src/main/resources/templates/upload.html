@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV - CSV Analyzer</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="upload-container">
+            <div class="header">
+                <h1>CSV Analyzer</h1>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            </div>
+            
+            <div th:if="${message}" class="alert" th:classappend="${message.startsWith('Error') ? 'alert-danger' : 'alert-success'}">
+                <span th:text="${message}"></span>
+            </div>
+
+            <form th:action="@{/upload}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Select CSV File</label>
+                    <input type="file" id="file" name="file" accept=".csv" required>
+                </div>
+                <button type="submit">Upload</button>
+            </form>
+
+            <div class="uploaded-files" th:if="${not #lists.isEmpty(uploadedFiles)}">
+                <h2>Uploaded Files</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="fileName : ${uploadedFiles}">
+                            <td th:text="${fileName}"></td>
+                            <td>
+                                <a th:href="@{/analysis(file=${fileName})}" class="btn-analyze">Analyze</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
