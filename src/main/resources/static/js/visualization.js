@@ -316,7 +316,17 @@ function updateScatter() {
             label: 'X Mean ± Std',
             data: [
                 {x: xMean + xStd, y: Math.min(...yData)},
-                {x: xMean + xStd, y: Math.max(...yData)},
+                {x: xMean + xStd, y: Math.max(...yData)}
+            ],
+            type: 'line',
+            borderColor: 'rgba(255, 165, 0, 0.7)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0
+        });
+        datasets.push({
+            label: 'X Mean - Std',
+            data: [
                 {x: xMean - xStd, y: Math.min(...yData)},
                 {x: xMean - xStd, y: Math.max(...yData)}
             ],
@@ -327,10 +337,20 @@ function updateScatter() {
             pointRadius: 0
         });
         datasets.push({
-            label: 'Y Mean ± Std',
+            label: 'Y Mean + Std',
             data: [
                 {x: Math.min(...xData), y: yMean + yStd},
-                {x: Math.max(...xData), y: yMean + yStd},
+                {x: Math.max(...xData), y: yMean + yStd}
+            ],
+            type: 'line',
+            borderColor: 'rgba(255, 165, 0, 0.7)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0
+        });
+        datasets.push({
+            label: 'Y Mean - Std',
+            data: [
                 {x: Math.min(...xData), y: yMean - yStd},
                 {x: Math.max(...xData), y: yMean - yStd}
             ],
